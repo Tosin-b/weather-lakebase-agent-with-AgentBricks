@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚠️ Weather Alerts Semantic Search</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #7e8ba3 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        h1 {
+            color: #1e3c72;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+        
+        .subtitle {
+            color: #666;
+            font-size: 1.1em;
+            margin-bottom: 30px;
+        }
+        
+        .search-container {
+            display: flex;
+            gap: 10px;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+        
+        .search-input {
+            flex: 1;
+            padding: 18px 24px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+        
+        .search-input:focus {
+            outline: none;
+            border-color: #2a5298;
+            box-shadow: 0 0 0 3px rgba(42, 82, 152, 0.1);
+        }
+        
+        .search-btn {
+            padding: 18px 40px;
+            background: linear-gradient(135deg, #2a5298 0%, #1e3c72 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .search-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(42, 82, 152, 0.3);
+        }
+        
+        .search-btn:active {
+            transform: translateY(0);
+        }
+        
+        .search-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .quick-searches {
+            margin-top: 20px;
+            text-align: center;
+        }
+        
+        .quick-searches span {
+            color: #666;
+            font-size: 14px;
+            margin-right: 10px;
+        }
+        
+        .quick-search-btn {
+            display: inline-block;
+            padding: 8px 16px;
+            margin: 5px;
+            background: #f0f0f0;
+            border: none;
+            border-radius: 20px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #555;
+        }
+        
+        .quick-search-btn:hover {
+            background: #e0e0e0;
+            transform: translateY(-1px);
+        }
+        
+        .search-tips {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin-top: 20px;
+            font-size: 14px;
+            line-height: 1.6;
+            text-align: left;
+        }
+        
+        .search-tips strong {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 15px;
+            color: rgba(255, 255, 255, 1);
+        }
+        
+        .search-tips p {
+            margin: 4px 0;
+            color: rgba(255, 255, 255, 0.9);
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: white;
+            font-size: 18px;
+        }
+        
+        .spinner {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            border: 4px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .results-container {
+            display: none;
+        }
+        
+        .results-container.active {
+            display: block;
+        }
+        
+        .results-header {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 20px 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .results-header h2 {
+            color: #1e3c72;
+            margin-bottom: 5px;
+        }
+        
+        .results-meta {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .alert-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transition: all 0.3s;
+            border-left: 5px solid #2a5298;
+        }
+        
+        .alert-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+        
+        .alert-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 15px;
+        }
+        
+        .alert-location {
+            font-size: 1.3em;
+            font-weight: 600;
+            color: #1e3c72;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .similarity-badge {
+            display: inline-block;
+            padding: 6px 14px;
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
+        }
+        
+        .alert-event {
+            display: inline-block;
+            padding: 5px 12px;
+            background: #fff3cd;
+            color: #856404;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 12px;
+        }
+        
+        .alert-text {
+            color: #444;
+            line-height: 1.7;
+            font-size: 15px;
+            margin-top: 10px;
+        }
+        
+        .no-results {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 60px 40px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .no-results-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+        
+        .no-results h3 {
+            color: #1e3c72;
+            margin-bottom: 10px;
+            font-size: 1.5em;
+        }
+        
+        .no-results p {
+            color: #666;
+            font-size: 16px;
+        }
+        
+        .error {
+            background: rgba(244, 67, 54, 0.95);
+            color: white;
+            padding: 20px 30px;
+            border-radius: 12px;
+            margin: 20px 0;
+            box-shadow: 0 4px 15px rgba(244, 67, 54, 0.3);
+            display: none;
+        }
+        
+        .error.active {
+            display: block;
+        }
+        
+        .error-icon {
+            font-weight: bold;
+            margin-right: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⚠️ Weather Alerts Search</h1>
+            <p class="subtitle">Semantic search powered by AI embeddings & pgvector</p>
+            
+            <div class="search-container">
+                <input 
+                    type="text" 
+                    id="searchInput" 
+                    class="search-input"
+                    placeholder="Try: 'flooding in coastal areas' or 'severe thunderstorms with hail'"
+                    autocomplete="off"
+                />
+                <button id="searchBtn" class="search-btn" onclick="searchAlerts()">
+                    <span>🔍</span>
+                    <span>Search</span>
+                </button>
+            </div>
+            
+            <div class="quick-searches">
+                <span>Quick searches:</span>
+                <button class="quick-search-btn" onclick="quickSearch('flooding near rivers')">🌊 Flooding</button>
+                <button class="quick-search-btn" onclick="quickSearch('tornado warnings')">🌪️ Tornado</button>
+                <button class="quick-search-btn" onclick="quickSearch('winter storm and snow')">❄️ Winter Storm</button>
+                <button class="quick-search-btn" onclick="quickSearch('extreme heat')">🔥 Heat</button>
+            </div>
+            
+            <div class="search-tips">
+                <p><strong>💡 Search Tips:</strong></p>
+                <p>• Describe weather naturally: "severe thunderstorms with hail"</p>
+                <p>• Mention locations: "coastal flooding", "mountain snow"</p>
+                <p>• Use weather terms: "wind advisory", "freeze warning", "flash flood"</p>
+            </div>
+        </div>
+        
+        <div id="error" class="error"></div>
+        
+        <div id="loading" class="loading" style="display: none;">
+            <div class="spinner"></div>
+            <p style="margin-top: 15px;">Searching weather alerts...</p>
+        </div>
+        
+        <div id="resultsContainer" class="results-container">
+            <div class="results-header">
+                <h2 id="resultsTitle">Search Results</h2>
+                <p class="results-meta" id="resultsMeta"></p>
+            </div>
+            <div id="resultsContent"></div>
+        </div>
+    </div>
+    
+    <script>
+        const searchInput = document.getElementById('searchInput');
+        const searchBtn = document.getElementById('searchBtn');
+        const loading = document.getElementById('loading');
+        const error = document.getElementById('error');
+        const resultsContainer = document.getElementById('resultsContainer');
+        const resultsContent = document.getElementById('resultsContent');
+        const resultsMeta = document.getElementById('resultsMeta');
+        
+        function quickSearch(query) {
+            searchInput.value = query;
+            searchAlerts();
+        }
+        
+        async function searchAlerts() {
+            const query = searchInput.value.trim();
+            
+            if (!query) {
+                showError('Please enter a search query');
+                return;
+            }
+            
+            // Hide previous results and errors
+            error.classList.remove('active');
+            resultsContainer.classList.remove('active');
+            loading.style.display = 'block';
+            searchBtn.disabled = true;
+            
+            try {
+                const response = await fetch('/weather/search', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        query: query,
+                        top_k: 10
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    showError(data.error || 'Search failed');
+                    return;
+                }
+                
+                displayResults(data, query);
+                
+            } catch (err) {
+                showError('Failed to connect to the server. Please try again.');
+                console.error('Search error:', err);
+            } finally {
+                loading.style.display = 'none';
+                searchBtn.disabled = false;
+            }
+        }
+        
+        function displayResults(data, query) {
+            resultsContainer.classList.add('active');
+            
+            if (data.message) {
+                // No embeddings available
+                resultsContent.innerHTML = `
+                    <div class="no-results">
+                        <div class="no-results-icon">📭</div>
+                        <h3>No weather alerts available</h3>
+                        <p>${data.message}</p>
+                    </div>
+                `;
+                resultsMeta.textContent = '';
+                return;
+            }
+            
+            if (!data.results || data.results.length === 0) {
+                resultsContent.innerHTML = `
+                    <div class="no-results">
+                        <div class="no-results-icon">🔍</div>
+                        <h3>No matching alerts found</h3>
+                        <p>Try adjusting your search query or try different keywords.</p>
+                    </div>
+                `;
+                resultsMeta.textContent = '';
+                return;
+            }
+            
+            // Display results metadata
+            resultsMeta.textContent = `Found ${data.results.length} alert${data.results.length !== 1 ? 's' : ''} matching "${query}"`;
+            
+            // Build results HTML
+            const resultsHTML = data.results.map(alert => {
+                const similarity = (alert.similarity * 100).toFixed(1);
+                const truncatedText = alert.chunk_text.length > 300 
+                    ? alert.chunk_text.substring(0, 300) + '...' 
+                    : alert.chunk_text;
+                
+                return `
+                    <div class="alert-card">
+                        <div class="alert-header">
+                            <div class="alert-location">
+                                <span>📍</span>
+                                <span>${escapeHtml(alert.location)}</span>
+                            </div>
+                            <div class="similarity-badge">${similarity}% match</div>
+                        </div>
+                        <div class="alert-event">⚠️ ${escapeHtml(alert.event)}</div>
+                        <div class="alert-text">${escapeHtml(truncatedText)}</div>
+                    </div>
+                `;
+            }).join('');
+            
+            resultsContent.innerHTML = resultsHTML;
+        }
+        
+        function showError(message) {
+            error.innerHTML = `<span class="error-icon">⚠️</span>${escapeHtml(message)}`;
+            error.classList.add('active');
+            setTimeout(() => {
+                error.classList.remove('active');
+            }, 5000);
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        // Allow Enter key to trigger search
+        searchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                searchAlerts();
+            }
+        });
+        
+        // Focus search input on page load
+        searchInput.focus();
+    </script>
+</body>
+</html>
