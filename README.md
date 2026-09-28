@@ -73,6 +73,12 @@ The ingestion pipeline runs as a Databricks notebook (`ingest_ticker_news_embedd
 3. Fetches all active alerts via `WeatherAlertsClient.get_all_alerts()`
 4. Upserts each alert into the `weather_information` table using `INSERT ... ON CONFLICT (id) DO UPDATE` for idempotent deduplication
 
+**Databricks Workflow DAG - Unstructured Data Processing:**
+
+![Databricks Workflow DAG](./Image/Screenshot%202026-09-28%20152945.png)
+
+*The Databricks workflow orchestrates the end-to-end pipeline: ingesting unstructured weather alert text, chunking narratives into 800-character segments with 100-character overlap, generating 384-dimensional embeddings via sentence-transformers, and upserting them into Lakebase with pgvector indexing for semantic search.*
+
 ### Step 3 — Lakebase Production Database
 
 Data lands in two tables within the `dataexpert_student` database:
@@ -143,6 +149,24 @@ The Flask app (`app.py`) serves as the user-facing layer, deployed as a Databric
 - **`/alerts/sync`** — Trigger a full sync from the NWS API (all states or specified subset)
 - **`/api/weather?state=CA`** — Get raw NWS alerts for a specific state
 - **`/weather/search`** — Semantic search endpoint: accepts a natural-language query, embeds it with MiniLM-L6-v2, and returns the top-K most similar weather alerts from the embeddings table using pgvector cosine similarity
+
+---
+
+## Agent in Action
+
+The Agent Bricks weather agent leverages the MCP tools to deliver intelligent, context-aware responses. Here are two key features in action:
+
+### Feature 1: Umbrella Prediction with Historical Context
+
+![Agent Feature - Umbrella Prediction](./Image/Screenshot%202026-09-28%20141203.png)
+
+*The agent combines real-time forecast data with vector similarity search over historical weather patterns. When asked "Do I need an umbrella?", it analyzes precipitation probability, searches for similar past weather events in the embeddings table, and provides a confidence-scored recommendation with supporting evidence from historical alerts.*
+
+### Feature 2: Semantic Weather Alert Search
+
+![Agent Feature - Weather Search](./Image/Screenshot%202026-09-28%20141715.png)
+
+*Natural language queries like "show me flood alerts" are embedded using the same MiniLM-L6-v2 model and matched against the pgvector index. The agent returns semantically similar weather alerts grouped by location, with similarity scores and excerpts from the narrative text, enabling users to discover relevant historical patterns without exact keyword matches.*
 
 ---
 
